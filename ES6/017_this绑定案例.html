@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+
+    <script>
+        //1、
+        var x = 10;
+        var obj = {
+            x: 20,
+            f: function () {
+                console.log(this.x);        // ?20 ，典型的隐性绑定,这里 f 的this指向上下文 obj ,即输出 20
+                var foo = function () {
+                    console.log(this.x);
+                }
+                foo();                      // ?10
+                //在这个地方就想当然的觉得 foo 在函数 f 里,也在 f 里执行，
+                //那 this 肯定是指向obj 啊 , 仔细看看我们说的this绑定规则 , 对应一下很容易
+                //发现这种'光杆司令'，是我们一开始就示范的默认绑定,这里this绑定的是window
+            }
+        };
+        obj.f();
+        console.log("--------------------------------------");
+
+
+
+
+
+
+        //2、
+        function foo2(arg) {
+            this.a2 = arg;
+            return this
+        };
+
+        var a2 = foo2(1);
+        var b2 = foo2(10);
+        console.log(a2.a2);    // ?undefined
+        // foo(1)执行，是默认绑定 , this指向了window，函数里等价于 window.a2 = 1,return window;
+        // var a2 = foo(1) 等价于 window.a2 = window , 很多人都忽略了var a2 就是window.a2 ，将刚刚赋值的 1 替换掉了。
+        // 所以这里的 a2 的值是 window , a2.a2 也是window ， 即window.a2 = window ; window.a2.a2 = window;
+        // foo(10) 和第一次一样，都是默认绑定，这个时候，将window.a2 赋值成 10 ，注意这里是关键，原来window.a2 = window ,现在被赋值成了10，变成了值类型，所以现在 a2.a2 = undefined。(验证这一点只需要将var b2 = foo2(10);删掉，这里的 a2.a2 还是window)
+        // var b2 = foo2(10); 等价于 window.b2 = window;
+
+        console.log(b2.a2);    // ?10
+        console.log("--------------------------------------");
+
+
+
+
+
+
+
+        //3、
+        var x3 = 10;
+        var obj3 = {
+            x3: 20,
+            f3: function () { console.log(this.x3); }
+        };
+        var bar3 = obj3.f3;
+        var obj4 = {
+            x3: 30,
+            f3: obj3.f3
+        }
+        obj3.f3();  //20，//有上下文，this为obj，隐性绑定
+        bar3();     //10，//'光杆司令' 默认绑定  （ obj.f 只是普通的赋值操作 ）
+        obj4.f3();  //30 //不管 f 函数怎么折腾，this只和 执行位置和方式有关，即我们所说的绑定规则
+        console.log("--------------------------------------");
+
+
+
+
+
+        //4、
+        function foo5() {
+            getName5 = function () { console.log(1); };
+            //这里的getName 将创建到全局window上
+            return this;
+        }
+        foo5.getName5 = function () { console.log(2); };//这个getName和上面的不同，是直接添加到foo上的
+
+        foo5.prototype.getName5 = function () { console.log(3); }; // 这个getName直接添加到foo的原型上，在用new创建新对象时将直接添加到新对象上 
+
+        var getName5 = function () { console.log(4); };// 和foo函数里的getName一样, 将创建到全局window上
+
+        function getName5() { console.log(5); } // 同上，但是这个函数不会被使用，因为函数声明的提升优先级最高，所以上面的函数表达式将永远替换
+                                                // 这个同名函数，除非在函数表达式赋值前去调用getName()
+
+
+        foo5.getName5();                // ? 2
+                                        // 其实直接设置foo.prototype上的属性，对当前这个对象的属性是没有影响的,
+                                        // 如果要使用的话，可以foo.prototype.getName5() 这样调用 ，这里需要知道的是
+                                        // 3 并不会覆盖 2，两者不冲突 ( 当你使用new 创建对象时，这里的
+                                        // Prototype 将自动绑定到新对象上，即用new 构造调用的第二个作用)
+
+        getName5();                    // ?  4
+                                        //这里涉及到函数提升的问题
+
+        foo5().getName5();              // ? 1
+                                        // 这里的foo函数执行完成了两件事, 1. 将window.getName5设置为1,
+                                        // 2. 返回window , 故等价于 window.getName5(); 输出 1
+
+        getName5();                    // ?  1
+                                        // 刚刚上面的函数刚把window.getName5设置为1,故同上 输出 1
+
+        new foo5.getName5();            // ? 2
+                                        //new 对一个函数进行构造调用 , 即 foo5.getName5 ,构造调用也是调用啊
+                                        // 该执行还是执行，然后返回一个新对象，输出 2 (虽然这里没有接收新
+                                        // 创建的对象但是我们可以猜到，是一个函数名为 foo.getName5 的对象
+                                        // 且__proto__属性里有一个getName5函数，是上面设置的 3 函数)
+
+        new foo5().getName5();          // ? 3
+                                        // 这里特别的地方就来了,new 是对一个函数进行构造调用,它直接找到了离它
+                                        // 最近的函数,foo5(),并返回了应该新对象,等价于 var obj = new foo5();
+                                        // obj.getName5(); 这样就很清晰了,输出的是之前绑定到prototype上的
+                                        // 那个getName5  3 ,因为使用new后会将函数的prototype继承给 新对象
+
+        new new foo5().getName5();      // ? 3
+                                        // 哈哈，这个看上去很吓人，让我们来分解一下：
+                                        // var obj = new foo();
+                                        // var obj1 = new obj.getName();
+                                        // 好了，仔细看看, 这不就是上两题的合体吗,obj 有getName 3, 即输出3
+                                        // obj 是一个函数名为 foo的对象,obj1是一个函数名为obj.getName的对象
+    </script>
+</body>
+
+</html>

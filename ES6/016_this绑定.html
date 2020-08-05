@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+    <script>
+        // this是JavaScript的关键字之一。它是 对象 自动生成的一个内部对象，只能在 对象 内部使用。
+        //随着函数使用场合的不同，this的值会发生变化。
+
+
+        //this指向什么，完全取决于 什么地方以什么方式调用，而不是 创建时。
+        //代码里的this在创建时指向非常明显啊，指向自己 people 对象，但是实际上指向 window 对象
+        var people = {
+            Name: "海洋饼干",
+            getName: function () {
+                console.log("this指向: " + this.Name);
+            }
+        };
+        var bar = people.getName;
+        bar();    // undefined
+
+
+
+
+        //1、默认绑定
+        // 典型的默认绑定，foo调用的位置是”光杆司令“，直接使用而不带任何修饰的函数调用，就 默认且只能 应用 默认绑定。
+        // 那默认绑定到哪呢，一般是window上，严格模式下 是undefined。
+        function foo() {
+            var a = 1;
+            console.log("默认绑定: " + this.a);    // 10
+        }
+        var a = 10;
+        foo();
+
+
+
+
+        //2、隐性绑定 
+        //obj.foo(), 函数foo执行的时候有了上下文对象，即 obj。这种情况下，函数里的this默认绑定为上下文对象，等价于打印obj.a,故输出10 。
+        // 如果是链性的关系，比如 xx.yy.obj.foo();, 上下文取函数的直接上级，即紧挨着的那个，或者说对象链的最后一个。 
+        function foo2() {
+            console.log("隐性绑定: " + this.a2);
+        }
+        var obj2 = {
+            a2: 10,
+            //隐性绑定中有一个致命的限制，就是上下文必须包含我们的函数，扩展,维护性太差
+            foo2: foo2
+        }
+        foo2();                // undefined 
+        obj2.foo2();            //10
+
+
+
+
+        //3、显性绑定
+        // js 给我们提供的函数 call 和 apply，它们的作用都是改变函数的this指向，第一个参数都是 设置this对象。
+        function foo3(a3, b3) {
+            console.log("call 和 apply: " + a3 + b3);
+        }
+        foo3.call(null, '海洋', '饼干');        // 海洋饼干  这里this指向不重要就写null了
+        foo3.apply(null, ['海洋', '饼干']);
+
+        //bind 只有一个函数，且不会立刻执行，只是将一个值绑定到函数的this上,并将绑定好的函数返回
+        function foo4() {
+            console.log("bind: " + this.a4);
+        }
+        var obj4 = { a4: 10 };
+        foo4 = foo4.bind(obj4);
+        foo4();
+
+        // 显性绑定
+        // call 是 foo 上的一个函数,在改变this指向的同时执行这个函数
+        function foo5() {
+            console.log("显性绑定: " + this.a5);
+        }
+        var obj5 = {
+            a5: 10            //去掉里面的foo
+        }
+        foo5.call(obj5);        // 10
+
+
+
+
+        //4、new绑定
+        //js中的只要用new修饰的 函数就是'构造函数'，准确来说是 函数的构造调用，因为在js中并不存在所谓的'构造函数'。
+        // 步骤：
+        // 创建一个新对象。
+        // 把这个新对象的__proto__属性指向 原函数的prototype属性。(即继承原函数的原型)
+        // 将这个新对象绑定到 此函数的this上 。(new绑定)
+        // 返回新对象，如果这个函数没有返回其他对象。
+
+        function foo6() {
+            this.a6 = 10;
+            console.log("默认绑定: "+this);
+        }
+        foo6();                    // window对象
+        console.log("默认绑定: "+window.a6);    // 10   默认绑定
+
+        var obj6 = new foo6();      // foo{ a6 : 10 }  创建的新对象的默认名为函数名
+                                    // 然后等价于 foo { a6 : 10 };  var obj = foo;
+        console.log("new绑定: "+obj6.a6);       // 10    new绑定
+        console.log(obj6);
+
+
+
+
+        //5、优先级
+        // new 绑定 > 显示绑定 > 隐式绑定 > 默认绑定
+
+
+
+
+        
+
+
+    </script>
+</body>
+
+</html>
